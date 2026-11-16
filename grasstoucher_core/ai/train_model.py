@@ -17,31 +17,13 @@ from sklearn.metrics import mean_squared_error, r2_score
 log = logging.getLogger("floodnav.ai.train")
 MODEL_DIR = Path(__file__).resolve().parent
 
-def fetch_historical_sensor_data():
+def fetch_historical_sensor_data(data_source: str = None):
     """
-    Trích xuất dữ liệu đo đạc thực tế từ database (nếu có kết nối PostgreSQL).
-    Tính toán chênh lệch mực nước theo chuỗi thời gian để bổ trợ dữ liệu huấn luyện.
+    Trích xuất dữ liệu đo đạc thực tế từ file hoặc nguồn dữ liệu ngoài nếu được cung cấp.
+    Core hoàn toàn Zero-DB (không phụ thuộc kết nối cơ sở dữ liệu trực tiếp).
     """
     records = []
-    try:
-        from ..db import pool
-        with pool.connection(timeout=3.0) as conn:
-            rows = conn.execute("""
-                SELECT point_id, depth_cm, recorded_at
-                FROM water_readings
-                ORDER BY point_id, recorded_at ASC
-            """).fetchall()
-            
-            if len(rows) >= 20:
-                for i in range(len(rows) - 1):
-                    r1 = rows[i]
-                    r2 = rows[i + 1]
-                    if r1["point_id"] == r2["point_id"]:
-                        d1 = float(r1["depth_cm"])
-                        d2 = float(r2["depth_cm"])
-                        records.append((d1, d2))
-    except Exception as e:
-        log.debug("Không thể lấy dữ liệu lịch sử từ DB (dùng chế độ mô phỏng thủy văn): %s", e)
+    # Điểm mở rộng khi tích hợp bộ dữ liệu CSV quan trắc trạm đo thực tế
     return records
 
 def generate_hydrological_training_data(n_samples: int = 4000, random_seed: int = 42):

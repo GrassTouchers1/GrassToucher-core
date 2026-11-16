@@ -28,14 +28,63 @@ def flood_penalty(depth_cm: float, limit_cm: float) -> Optional[float]:
     return (depth_cm - config.PENALTY_START_CM) / (limit_cm - config.PENALTY_START_CM)
 
 
-def edge_cost(length: float, flood: Optional[dict], vehicle: str, mode: str) -> Optional[float]:
-    """Chi phí một đoạn đường. None nghĩa là không đi được."""
-    if mode == "fastest" or flood is None:
+def multi_hazard_edge_cost(length: float, hazard_data: Any, vehicle: str, mode: str) -> Optional[float]:
+    """
+    Mô hình trở kháng đa thiên tai (Multi-Hazard Impedance Model):
+    C(e) = L(e) * (1 + sum(alpha_h * factor_h))
+    Hỗ trợ:
+      - flood: ngập lụt đô thị theo mực nước và loại xe
+      - landslide: sạt lở đất đồi núi/taluy
+      - storm_block: cây đổ/chướng ngại vật do bão
+      - general: vùng rủi ro thiên tai tổng hợp
+    """
+    if mode == "fastest" or hazard_data is None:
         return length
-    pen = flood_penalty(flood["depth_cm"], vehicle_limit(vehicle, flood["threshold_cm"]))
-    if pen is None:
-        return None
-    return length * (1.0 + config.PENALTY_ALPHA * pen)
+
+    hazards = hazard_data if isinstance(hazard_data, list) else [hazard_data]
+    total_penalty = 0.0
+
+    for h in hazards:
+        if not isinstance(h, dict):
+            continue
+
+        # 1. Đoạn đường bị cấm/chặn hoàn toàn
+        if h.get("passable") is False or h.get("blocked") is True:
+            return None
+
+        h_type = h.get("hazard_type") or h.get("type", "flood")
+
+        # 2. Sạt lở đất
+        if h_type == "landslide":
+            sev = h.get("severity", "medium")
+            if sev in ("high", "critical"):
+                return None  # Cấm đường hoàn toàn khi sạt lở nặng
+            total_penalty += getattr(config, "LANDSLIDE_PENALTY_ALPHA", 30.0)
+
+        # 3. Tắc nghẽn bão / Cây đổ
+        elif h_type in ("storm_block", "tree_fall"):
+            return None
+
+        # 4. Ngập lụt (Flood)
+        elif "depth_cm" in h or h_type == "flood":
+            depth = float(h.get("depth_cm", 0.0))
+            threshold = float(h.get("threshold_cm", 20.0))
+            pen = flood_penalty(depth, vehicle_limit(vehicle, threshold))
+            if pen is None:
+                return None  # Ngập vượt ngưỡng xe
+            total_penalty += config.PENALTY_ALPHA * pen
+
+        # 5. Rủi ro tổng quát
+        else:
+            risk = float(h.get("risk_score", 0.5))
+            total_penalty += 10.0 * risk
+
+    return length * (1.0 + total_penalty)
+
+
+def edge_cost(length: float, flood: Optional[dict], vehicle: str, mode: str) -> Optional[float]:
+    """Chi phí một đoạn đường (Tương thích ngược 100%)."""
+    return multi_hazard_edge_cost(length, flood, vehicle, mode)
 
 
 def best_edge(G, flood_map: dict, u: int, v: int, vehicle: str, mode: str) -> Tuple[Optional[int], Optional[float]]:
@@ -140,17 +189,34 @@ def describe_route(G, flood_map: dict, path: List[int], vehicle: str, mode: str)
         flood = flood_map.get((u, v, k))
         edge_passable = True
         if flood is not None:
-            depth = flood["depth_cm"]
-            limit = vehicle_limit(vehicle, flood["threshold_cm"])
-            if depth >= limit:
+            if flood.get("passable") is False or flood.get("blocked") is True:
                 edge_passable = False
                 passable = False
-            if depth >= config.PENALTY_START_CM:
                 warnings.append({
-                    "name": flood["name"],
-                    "depth_cm": depth,
-                    "threshold_cm": flood["threshold_cm"],
-                    "passable": edge_passable,
+                    "name": flood.get("name", "Vùng nguy cơ thiên tai"),
+                    "depth_cm": 0.0,
+                    "threshold_cm": 0.0,
+                    "passable": False
+                })
+            elif "depth_cm" in flood:
+                depth = float(flood["depth_cm"])
+                limit = vehicle_limit(vehicle, float(flood.get("threshold_cm", 20.0)))
+                if depth >= limit:
+                    edge_passable = False
+                    passable = False
+                if depth >= config.PENALTY_START_CM:
+                    warnings.append({
+                        "name": flood.get("name", "Điểm ngập"),
+                        "depth_cm": depth,
+                        "threshold_cm": float(flood.get("threshold_cm", 20.0)),
+                        "passable": edge_passable,
+                    })
+            else:
+                warnings.append({
+                    "name": flood.get("name", "Vùng cảnh báo thiên tai"),
+                    "depth_cm": 0.0,
+                    "threshold_cm": 0.0,
+                    "passable": True,
                 })
 
         coords = edge_coords(G, u, v, data)
@@ -162,7 +228,7 @@ def describe_route(G, flood_map: dict, path: List[int], vehicle: str, mode: str)
         segments.append({
             "u": u, "v": v, "length_m": round(length, 1),
             "street": data.get("name") if isinstance(data.get("name"), str) else None,
-            "flooded": flood is not None and flood["depth_cm"] >= config.PENALTY_START_CM,
+            "flooded": flood is not None and (float(flood.get("depth_cm", 0.0)) >= config.PENALTY_START_CM or flood.get("hazard_type")),
             "passable": edge_passable,
         })
 
@@ -191,6 +257,26 @@ def describe_route(G, flood_map: dict, path: List[int], vehicle: str, mode: str)
         },
         "segments": segments,
     }
+
+
+def slice_coords_to_proj(coords_list: list, proj_coord: list, from_start: bool = True) -> list:
+    """Cắt danh sách toạ độ cạnh từ đầu danh sách tới điểm chiếu proj_coord (hoặc ngược lại)."""
+    if not coords_list:
+        return [proj_coord]
+    min_d, min_idx = float("inf"), 0
+    px, py = proj_coord[0], proj_coord[1]
+    for idx, c in enumerate(coords_list):
+        d = (c[0] - px) ** 2 + (c[1] - py) ** 2
+        if d < min_d:
+            min_d, min_idx = d, idx
+    if from_start:
+        res = list(coords_list[:min_idx + 1])
+        if not res or res[-1] != proj_coord:
+            res.append(proj_coord)
+        return res
+    else:
+        res = [proj_coord] + list(coords_list[min_idx:])
+        return res
 
 
 def calculate_routes(
@@ -273,3 +359,89 @@ def calculate_routes(
         "snap_origin": snap_orig,
         "snap_destination": snap_dest,
     }
+
+
+def find_evacuation_route(
+    graph,
+    hazard_map: dict,
+    origin_lng: float,
+    origin_lat: float,
+    shelters: List[Dict[str, Any]],
+    vehicle: str = "walk",
+) -> Dict[str, Any]:
+    """
+    Thuật toán tìm đường sơ tán khẩn cấp tới điểm an toàn (Evacuation Dijkstra):
+    Tìm lộ trình an toàn nhất và gần nhất từ vị trí người dân tới điểm sơ tán khả dụng.
+    """
+    if not shelters:
+        return {"found": False, "reason": "Không có điểm sơ tán nào trong hệ thống."}
+
+    snap_orig = graph.snap_to_edge(origin_lng, origin_lat)
+    if snap_orig["dist_m"] > config.MAX_SNAP_M:
+        return {"found": False, "reason": f"Vị trí quá xa mạng lưới đường bộ (>{config.MAX_SNAP_M}m)."}
+
+    orig_node = snap_orig["closer_node"]
+
+    shelter_node_map = {}
+    target_nodes = set()
+    for s in shelters:
+        if s.get("status") == "closed":
+            continue
+        if s.get("capacity") and s.get("current_occupancy", 0) >= s["capacity"]:
+            continue
+        try:
+            s_snap = graph.snap_to_edge(s["lng"], s["lat"])
+            s_node = s_snap["closer_node"]
+            shelter_node_map[s_node] = s
+            target_nodes.add(s_node)
+        except Exception:
+            continue
+
+    if not target_nodes:
+        return {"found": False, "reason": "Không có điểm sơ tán khả dụng nào còn chỗ tiếp nhận."}
+
+    def weight_fn(u, v, key_dict):
+        best = None
+        for k, data in key_dict.items():
+            c = multi_hazard_edge_cost(data.get("length", 0.0), hazard_map.get((u, v, k)), vehicle, "safe")
+            if c is not None and (best is None or c < best):
+                best = c
+        return best
+
+    try:
+        dist_dict, path_dict = nx.multi_source_dijkstra(
+            graph.G,
+            sources={orig_node},
+            target=None,
+            weight=weight_fn
+        )
+    except Exception as e:
+        return {"found": False, "reason": f"Lỗi thuật toán tìm kiếm: {e}"}
+
+    reachable_shelters = [n for n in target_nodes if n in dist_dict]
+    if not reachable_shelters:
+        return {"found": False, "reason": "Tất cả các tuyến đường tới điểm sơ tán đã bị chia cắt bởi thiên tai."}
+
+    best_shelter_node = min(reachable_shelters, key=lambda n: dist_dict[n])
+    best_path = path_dict[best_shelter_node]
+    chosen_shelter = shelter_node_map[best_shelter_node]
+
+    desc = describe_route(graph.G, hazard_map, best_path, vehicle, "safe")
+    speed_kmh = config.SPEED_KMH.get(vehicle, 4.5)
+    speed_m_min = speed_kmh * 1000 / 60
+    duration_min = round(desc["distance_m"] / speed_m_min, 1)
+
+    return {
+        "found": True,
+        "mode": "evacuation",
+        "vehicle": vehicle,
+        "shelter": chosen_shelter,
+        "distance_m": desc["distance_m"],
+        "duration_min": duration_min,
+        "cost": desc["cost"],
+        "geometry": desc["geometry"],
+        "segments": desc["segments"],
+        "flood_warnings": desc.get("flood_warnings", []),
+        "safety_score": 1.0 if not desc.get("flood_warnings") else 0.85,
+    }
+

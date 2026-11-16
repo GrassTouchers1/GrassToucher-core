@@ -6,6 +6,7 @@ Giấy phép: GNU AGPL v3 (Mã nguồn mở, Hoàn toàn miễn phí, không yê
 import urllib.request
 import json
 import logging
+import time
 from typing import Dict, Any, Tuple
 
 log = logging.getLogger("grasstoucher.weather")
@@ -20,11 +21,21 @@ OPEN_METEO_URL = (
     f"timezone=Asia%2FBangkok&forecast_days=1"
 )
 
+_weather_cache: Dict[str, Any] = None
+_weather_cache_time: float = 0.0
+WEATHER_CACHE_TTL = 300.0  # Cache 5 phút
+
 
 def fetch_hanoi_weather(timeout: int = 5) -> Dict[str, Any]:
     """
     Lấy dự báo lượng mưa theo từng giờ trong ngày của Hà Nội từ Open-Meteo.
+    Có cơ chế bộ nhớ đệm (TTL 5 phút) để tối ưu hiệu năng và tránh bị rate limit.
     """
+    global _weather_cache, _weather_cache_time
+    now = time.time()
+    if _weather_cache is not None and (now - _weather_cache_time) < WEATHER_CACHE_TTL:
+        return _weather_cache
+
     try:
         req = urllib.request.Request(
             OPEN_METEO_URL,
@@ -37,7 +48,7 @@ def fetch_hanoi_weather(timeout: int = 5) -> Dict[str, Any]:
         times = hourly.get("time", [])[:24]
         precip = hourly.get("precipitation", [])[:24]
 
-        return {
+        res = {
             "status": "ok",
             "city": "Hà Nội",
             "coordinates": {"lat": HANOI_LAT, "lng": HANOI_LNG},
@@ -46,9 +57,14 @@ def fetch_hanoi_weather(timeout: int = 5) -> Dict[str, Any]:
                 for t, p in zip(times, precip)
             ],
         }
+        _weather_cache = res
+        _weather_cache_time = now
+        return res
     except Exception as e:
         log.warning("Không thể kết nối Open-Meteo API, sử dụng dữ liệu mặc định: %s", e)
-        return {
+        if _weather_cache is not None:
+            return _weather_cache
+        fallback = {
             "status": "fallback",
             "city": "Hà Nội",
             "hourly_forecast": [
@@ -56,6 +72,9 @@ def fetch_hanoi_weather(timeout: int = 5) -> Dict[str, Any]:
                 for h in range(24)
             ],
         }
+        _weather_cache = fallback
+        _weather_cache_time = now
+        return fallback
 
 
 def get_rainfall_summary() -> Tuple[float, float]:

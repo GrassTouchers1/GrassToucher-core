@@ -25,6 +25,11 @@ CAR_LIMIT_FACTOR = 1.5      # Ngưỡng ô tô = ngưỡng điểm ngập x 1.5 
 LEVEL_DEPTH_CM = {"light": 10.0, "medium": 25.0, "heavy": 40.0}
 
 # Tốc độ trung bình ước tính trong đô thị (km/h) để tính thời gian di chuyển
-SPEED_KMH = {"motorbike": 25.0, "car": 30.0}
+SPEED_KMH = {"motorbike": 25.0, "car": 30.0, "walk": 4.5}
+
+# Hệ số cản trở đa thiên tai (Multi-Hazard Penalty Factors)
+HAZARD_RADIUS_M = 100.0         # Bán kính vùng ảnh hưởng thiên tai (mét)
+LANDSLIDE_PENALTY_ALPHA = 30.0  # Phạt đường sạt lở hoặc nguy cơ sạt lở
+STORM_BLOCK_PENALTY_ALPHA = 50.0 # Phạt chướng ngại vật/cây đổ bão
 
 MAX_SNAP_M = 2000.0         # Điểm xuất phát/đích cách đường gần nhất quá 2 km thì mới báo lỗi

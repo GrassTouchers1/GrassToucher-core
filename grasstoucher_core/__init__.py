@@ -4,7 +4,14 @@ Giấy phép: Apache License 2.0 (OSI-Approved).
 """
 from .config import METRIC_CRS, FLOOD_RADIUS_M, PENALTY_ALPHA
 from .graph import RoadGraph, get_graph, GraphNotReady
-from .routing import calculate_routes, find_path, describe_route
+from .routing import (
+    calculate_routes,
+    find_path,
+    describe_route,
+    slice_coords_to_proj,
+    multi_hazard_edge_cost,
+    find_evacuation_route,
+)
 from .weather import fetch_hanoi_weather, get_rainfall_summary
 from .ai.prediction_engine import WaterPredictionEngine, get_prediction_engine
 
@@ -16,6 +23,9 @@ __all__ = [
     "calculate_routes",
     "find_path",
     "describe_route",
+    "slice_coords_to_proj",
+    "multi_hazard_edge_cost",
+    "find_evacuation_route",
     "fetch_hanoi_weather",
     "get_rainfall_summary",
     "WaterPredictionEngine",

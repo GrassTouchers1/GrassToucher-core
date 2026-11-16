@@ -131,6 +131,38 @@ class RoadGraph:
                         "name": s.get("name", "Điểm ngập"),
                         "kind": s.get("kind", "point"),
                         "source_id": s.get("source_id"),
+                        "hazard_type": "flood",
+                    }
+        return result
+
+    def hazard_edges(self, hazards: List[Dict[str, Any]]) -> Dict[Tuple[int, int, int], Dict[str, Any]]:
+        """
+        Gắn các sự kiện thiên tai đa dạng (ngập lụt, sạt lở, bão, cây đổ) vào mạng lưới đường.
+        """
+        if not hazards:
+            return {}
+
+        result = {}
+        pts = gpd.GeoSeries(
+            gpd.points_from_xy([h["lng"] for h in hazards], [h["lat"] for h in hazards]),
+            crs=4326,
+        ).to_crs(config.METRIC_CRS)
+
+        for h, pt in zip(hazards, pts):
+            rad = float(h.get("radius_m") or (config.FLOOD_RADIUS_M if h.get("hazard_type") == "flood" else config.HAZARD_RADIUS_M))
+            hits = self.edges_m.sindex.query(pt.buffer(rad), predicate="intersects")
+            for i in hits:
+                key = self.edge_keys[int(i)]
+                cur = result.get(key)
+                if cur is None or h.get("passable") is False or h.get("severity") in ("high", "critical"):
+                    result[key] = {
+                        "hazard_type": h.get("hazard_type", "general"),
+                        "severity": h.get("severity", "medium"),
+                        "name": h.get("name", "Vùng nguy cơ thiên tai"),
+                        "passable": h.get("passable", True),
+                        "depth_cm": float(h.get("depth_cm", 0.0)),
+                        "threshold_cm": float(h.get("threshold_cm", 20.0)),
+                        "hazard_id": h.get("id"),
                     }
         return result
 
