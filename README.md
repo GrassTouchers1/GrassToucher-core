@@ -1,4 +1,4 @@
-# 🌐 GrassToucher Core – Adaptive Urban Flood Routing & AI Hydrology Engine
+# 🌐 NORTHSTAR Core – Multi-Hazard Disaster Intelligence & Evacuation Engine (GrassToucher Core v0.4.0)
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![OSI Approved](https://img.shields.io/badge/OSI-Approved%20Open%20Source-brightgreen.svg)](https://opensource.org/licenses)
@@ -7,20 +7,22 @@
 [![Open-Meteo](https://img.shields.io/badge/Weather-Open--Meteo%20API-orange.svg)](https://open-meteo.com/)
 [![Scikit-Learn](https://img.shields.io/badge/AI-Scikit--Learn-F7931E.svg?logo=scikit-learn)](https://scikit-learn.org/)
 
-> **Thư viện lõi định tuyến thông minh thích ứng ngập lụt đô thị và mô hình AI dự báo mực nước dâng/rút.**  
-> Dự án 100% Mã nguồn mở, độc lập và dễ dàng tích hợp vào bất kỳ hệ sinh thái giao thông đô thị nào.
+> **Thư viện lõi định tuyến thông minh thích ứng đa thiên tai, cứu hộ sơ tán khẩn cấp và mô hình AI thủy văn học máy.**  
+> Kế thừa GrassToucher Core, đóng gói độc lập theo chuẩn Python Package (Zero-DB Architecture) cho hệ sinh thái **NORTHSTAR**.
 
 ---
 
 ## 💡 1. Giới thiệu & Tuyên ngôn Mã nguồn mở
 
-Vào mùa mưa lũ tại các đô thị Việt Nam (như Hà Nội, TP.HCM), hiện tượng ngập cục bộ khiến các dịch vụ bản đồ thông thường (Google Maps, Apple Maps) trở nên kém hiệu quả do thiếu thông tin về độ sâu mực nước và không hỗ trợ né ngập theo ngưỡng an toàn từng loại phương tiện.
+Vào mùa mưa bão tại Việt Nam, các hiện tượng ngập lụt đô thị, sạt lở đất đá và bão lũ gây cô lập nghiêm trọng hạ tầng giao thông.
 
-**GrassToucher Core** cung cấp giải pháp thuật toán mã nguồn mở toàn diện:
+**NORTHSTAR Core** cung cấp giải pháp thuật toán mã nguồn mở toàn diện:
 - **Đồ thị không gian mở:** Trích xuất mạng lưới đường bộ từ **OpenStreetMap (OSM)** thông qua **OSMnx** và **NetworkX**.
-- **Thuật toán A\* có trọng số phạt ngập:** Tự động né các đoạn ngập sâu hoặc cấm đường đối với phương tiện vượt ngưỡng.
-- **Học máy dự báo ngập 30/60 phút:** Sử dụng mô hình **Gradient Boosting** tích hợp lượng mưa mở theo thời gian thực từ **Open-Meteo API**.
-- **100% Free & Open Source Software (FOSS):** Không sử dụng bất kỳ API trả phí, khóa bảo mật độc quyền hay dữ liệu đóng nào.
+- **Thuật toán A\* & Dijkstra Đa thiên tai:** Thích ứng tự động với ngập lụt (`flood`), sạt lở (`landslide`), cản trở bão (`storm_block`) và sự cố hạ tầng.
+- **Thuật toán Định tuyến Sơ tán Khẩn cấp (Multi-target Dijkstra):** Tự động tìm đường thoát nạn ngắn nhất và an toàn nhất từ vị trí gặp nạn tới điểm trú ẩn an toàn (`evacuation shelter`) gần nhất theo phương thức đi bộ hoặc xe cơ giới.
+- **Học máy dự báo ngập 30/60 phút:** Sử dụng mô hình **Gradient Boosting** tích hợp lượng mưa mở theo thời gian thực từ **Open-Meteo API** kèm cơ chế in-memory caching 5 phút tối ưu hiệu năng.
+- **100% Free & Open Source Software (FOSS):** Không sử dụng bất kỳ API trả phí hay cơ sở dữ liệu đóng nào.
+
 
 ---
 
@@ -87,6 +89,38 @@ result = calculate_routes(
 print("Lộ trình né ngập an toàn:", result["safe"]["found"])
 print("Khoảng cách (m):", result["safe"]["distance_m"])
 print("Thời gian dự kiến (phút):", result["safe"]["duration_min"])
+```
+
+### 3.3. Ví dụ định tuyến sơ tán khẩn cấp (Emergency Evacuation Routing)
+```python
+from grasstoucher_core import get_graph, find_evacuation_route
+
+graph = get_graph()
+
+# Danh sách nơi trú ẩn an toàn
+shelters = [
+    {"id": 1, "name": "Nhà văn hóa Dịch Vọng", "lng": 105.792, "lat": 21.037},
+    {"id": 2, "name": "Trường ĐH Quốc gia Hà Nội", "lng": 105.782, "lat": 21.038}
+]
+
+# Danh sách vùng thiên tai đang diễn ra
+hazard_sources = [
+    {"lng": 105.7801, "lat": 21.0372, "hazard_type": "flood", "severity": "danger", "depth_cm": 45.0}
+]
+
+# Tìm đường thoát hiểm gần nhất bằng phương thức đi bộ
+evac_result = find_evacuation_route(
+    graph=graph,
+    origin_lng=105.7810, origin_lat=21.0365,
+    shelters=shelters,
+    hazard_sources=hazard_sources,
+    mode="walk"
+)
+
+if evac_result["found"]:
+    print(f"Điểm sơ tán tối ưu: {evac_result['shelter']['name']}")
+    print(f"Khoảng cách đi bộ: {evac_result['distance_m']} m")
+    print(f"Thời gian thoát hiểm: {evac_result['duration_min']} phút")
 ```
 
 ---
