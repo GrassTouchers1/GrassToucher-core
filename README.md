@@ -132,6 +132,20 @@ python -m unittest discover -s tests
 
 ---
 
-## 📄 5. Giấy phép Bản quyền (License)
+## 🌍 5. Danh mục Nguồn Dữ liệu Mở & Tính Pháp lý (Open Data Compliance)
+
+Hệ thống **NORTHSTAR** được thiết kế dựa trên nguyên tắc **100% Minh bạch Khoa học & Dữ liệu Mở Hợp pháp (Open Data & Open Source)**. Dự án hoàn toàn không sử dụng dữ liệu thương mại đóng, tuân thủ nghiêm ngặt các công ước và giấy phép bản quyền:
+
+| STT | Nguồn dữ liệu | Cơ quan / Tổ chức phát hành | Giấy phép / Cơ sở pháp lý | Vai trò kỹ thuật trong NorthStar |
+|---|---|---|---|---|
+| **1** | [OpenStreetMap (OSM)](https://www.openstreetmap.org) | OpenStreetMap Foundation | **Open Database License (ODbL) 1.0** (Open Data) | Xương sống hình học mạng lưới đường bộ, nút giao thông. Trích xuất đồ thị (Graph) qua OSMnx/NetworkX cho thuật toán tìm đường né ngập $A^*$ và sơ tán Dijkstra. |
+| **2** | [Copernicus Data Space](https://dataspace.copernicus.eu) (Sentinel-1 SAR) | European Space Agency (ESA) & European Commission (EC) | **EU Copernicus Full, Free & Open Access Policy** (Regulation EU No 377/2014) | Viễn thám radar khẩu độ tổng hợp băng C xuyên mây bão 24/7, bóc tách vết ngập nước (Water Inundation Mask) để tự động khoanh vùng rủi ro đa thiên tai (Multi-Hazard Zones). |
+| **3** | [Trung tâm Dự báo KTTV Quốc gia](https://nchmf.gov.vn) (NCHMF) | Tổng cục Khí tượng Thủy văn - Bộ TN&MT Việt Nam | **Dữ liệu Công ích** (Nghị định 47/2020/NĐ-CP & Luật Tiếp cận thông tin 2016) | Chuẩn hóa các cấp báo động lũ (Báo động 1, 2, 3) trên các lưu vực sông Miền Bắc (Sông Thao, Sông Cầu, Sông Thương, Sông Hồng, Sông Đáy) và bản tin lũ quét, sạt lở đất khẩn cấp. |
+| **4** | [Open Development Mekong](https://data.vietnam.opendevelopmentmekong.net) (ODM) | Open Development Initiative (ODI) | **Creative Commons Attribution 4.0 (CC-BY 4.0)** | Bản đồ GIS mạng lưới lưu vực sông ngòi tự nhiên, hệ thống đê điều, vị trí các hồ chứa thủy điện lớn (Hòa Bình, Tuyên Quang, Thác Bà) và vùng trũng thấp. |
+| **5** | [Open-Meteo Weather API](https://open-meteo.com) | Open-Meteo Inc. | **Creative Commons Attribution 4.0 (CC-BY 4.0)** | Lượng mưa thực tế theo giờ (mm/h) tại các tọa độ trạm quan trắc nạp vào mô hình máy học Gradient Boosting dự báo mực nước dâng sau 30/60 phút. |
+
+---
+
+## 📄 6. Giấy phép Bản quyền (License)
 Dự án được phân phối dưới giấy phép **Apache License 2.0 (OSI-Approved)**. Xem chi tiết tại [LICENSE](LICENSE).
 Mọi đóng góp tuân thủ theo [CONTRIBUTING.md](CONTRIBUTING.md).
