@@ -12,10 +12,17 @@ from .routing import (
     multi_hazard_edge_cost,
     find_evacuation_route,
 )
-from .weather import fetch_hanoi_weather, get_rainfall_summary
+from .weather import (
+    fetch_hanoi_weather,
+    get_rainfall_summary,
+    fetch_open_meteo_flood,
+    get_glofas_basin_status,
+    fetch_nasa_gpm_precipitation,
+    get_osi_open_data_registry,
+)
 from .ai.prediction_engine import WaterPredictionEngine, get_prediction_engine
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 __all__ = [
     "RoadGraph",
     "get_graph",
@@ -28,6 +35,10 @@ __all__ = [
     "find_evacuation_route",
     "fetch_hanoi_weather",
     "get_rainfall_summary",
+    "fetch_open_meteo_flood",
+    "get_glofas_basin_status",
+    "fetch_nasa_gpm_precipitation",
+    "get_osi_open_data_registry",
     "WaterPredictionEngine",
     "get_prediction_engine",
     "METRIC_CRS",
