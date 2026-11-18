@@ -6,23 +6,24 @@
 [![OpenStreetMap](https://img.shields.io/badge/Data-OpenStreetMap-green.svg)](https://www.openstreetmap.org/)
 [![Open-Meteo](https://img.shields.io/badge/Weather-Open--Meteo%20API-orange.svg)](https://open-meteo.com/)
 [![Scikit-Learn](https://img.shields.io/badge/AI-Scikit--Learn-F7931E.svg?logo=scikit-learn)](https://scikit-learn.org/)
+[![Tests: 8/8 Passing](https://img.shields.io/badge/Tests-8%2F8%20Passing-brightgreen.svg)](https://docs.python.org/3/library/unittest.html)
 
 > **Thư viện lõi định tuyến thông minh thích ứng đa thiên tai, cứu hộ sơ tán khẩn cấp và mô hình AI thủy văn học máy.**  
-> Kế thừa GrassToucher Core, đóng gói độc lập theo chuẩn Python Package (Zero-DB Architecture) cho hệ sinh thái **NORTHSTAR**.
+> Đóng gói độc lập theo chuẩn Python Package (Zero-DB Architecture) phục vụ cả hệ thống điều phối tác chiến **NORTHSTAR COMMAND** và ứng dụng cứu trợ dân sự **NORTHSTAR CITIZEN**.
 
 ---
 
 ## 💡 1. Giới thiệu & Tuyên ngôn Mã nguồn mở
 
-Vào mùa mưa bão tại Việt Nam, các hiện tượng ngập lụt đô thị, sạt lở đất đá và bão lũ gây cô lập nghiêm trọng hạ tầng giao thông.
+Vào mùa mưa bão tại Việt Nam, các hiện tượng ngập lụt đô thị, sạt lở đất đá và lũ lụt diện rộng gây cô lập nghiêm trọng hạ tầng giao thông.
 
 **NORTHSTAR Core** cung cấp giải pháp thuật toán mã nguồn mở toàn diện:
 - **Đồ thị không gian mở:** Trích xuất mạng lưới đường bộ từ **OpenStreetMap (OSM)** thông qua **OSMnx** và **NetworkX**.
-- **Thuật toán A\* & Dijkstra Đa thiên tai:** Thích ứng tự động với ngập lụt (`flood`), sạt lở (`landslide`), cản trở bão (`storm_block`) và sự cố hạ tầng.
-- **Thuật toán Định tuyến Sơ tán Khẩn cấp (Multi-target Dijkstra):** Tự động tìm đường thoát nạn ngắn nhất và an toàn nhất từ vị trí gặp nạn tới điểm trú ẩn an toàn (`evacuation shelter`) gần nhất theo phương thức đi bộ hoặc xe cơ giới.
+- **Thuật toán A\* Đa phương tiện né ngập:** Tự động né các cung đường ngập sâu >20cm (đối với xe máy) và >30cm (đối với xe cơ giới, cứu thương, xe tải cứu trợ 4x4).
+- **Thuật toán Định tuyến Sơ tán Khẩn cấp (Multi-target Dijkstra):** Tự động tìm đường thoát nạn ngắn nhất và an toàn nhất từ tọa độ nạn nhân tới điểm trú ẩn an toàn (`evacuation shelter`) gần nhất theo phương thức đi bộ hoặc xe cơ giới.
 - **Học máy dự báo ngập 30/60 phút:** Sử dụng mô hình **Gradient Boosting** tích hợp lượng mưa mở theo thời gian thực từ **Open-Meteo API** kèm cơ chế in-memory caching 5 phút tối ưu hiệu năng.
+- **Tính toán Lộ trình Tác chiến bàn giao:** Đóng gói thông tin lộ trình khô ráo, an toàn hỗ trợ các lực lượng cứu hộ cơ động (PCCC 114, Cấp cứu 115, Đoàn xe 4x4) tiếp cận hiện trường nhanh nhất.
 - **100% Free & Open Source Software (FOSS):** Không sử dụng bất kỳ API trả phí hay cơ sở dữ liệu đóng nào.
-
 
 ---
 
@@ -41,13 +42,14 @@ Trong đó:
 
 **Ngưỡng an toàn phương tiện ($\text{limit}$):**
 - Xe máy: $\text{limit} \approx 20\text{ cm}$.
-- Ô tô: $\text{limit} = 20 \times 1.5 = 30\text{ cm}$.
+- Ô tô / Xe tải nhẹ: $\text{limit} = 20 \times 1.5 = 30\text{ cm}$.
+- Xe cứu hộ đặc chủng / Xe tải 4x4: $\text{limit} \approx 50\text{ cm}$.
 - Hệ số phạt tối đa: $\alpha = 8.0$ (đoạn đường có thể bị tăng chi phí tới 9 lần trước khi bị chặn hẳn).
 
 ---
 
-### 2.2. Khớp nối không gian (Spatial Snapping & Buffering)
-- Sử dụng hệ tọa độ mét **UTM 48N (EPSG:32648)** để đảm bảo độ chuẩn xác khoảng cách thực địa tại Hà Nội.
+### 2.2. Khớp nối không gian & Chỉ mục R-Tree (Spatial Snapping & Buffering)
+- Sử dụng hệ tọa độ mét **UTM 48N (EPSG:32648)** để đảm bảo độ chuẩn xác khoảng cách thực địa tại Việt Nam.
 - Điểm ngập được tạo vùng ảnh hưởng (Buffer) bán kính $60\text{ m}$.
 - Chỉ mục không gian **R-Tree** (`geopandas`, `shapely.sindex`) cho phép quét và gán trọng số ngập lên hàng chục nghìn đoạn đường trong thời gian tính bằng mili-giây.
 
@@ -57,14 +59,14 @@ Trong đó:
 
 ### 3.1. Cài đặt thư viện
 ```bash
-git clone https://github.com/GrassTouchers1/GrassToucher-core.git
+git clone -b dev https://github.com/GrassTouchers1/GrassToucher-core.git
 cd GrassToucher-core
 
-# Cài đặt dạng package phát triển
+# Cài đặt dạng package phát triển (Editable mode)
 pip install -e .
 ```
 
-### 3.2. Ví dụ code tìm đường Python:
+### 3.2. Ví dụ code tìm đường Python (A* Né ngập)
 ```python
 from grasstoucher_core import get_graph, calculate_routes
 
@@ -76,7 +78,7 @@ flood_sources = [
     {"lng": 105.7801, "lat": 21.0372, "depth_cm": 25.0, "threshold_cm": 20.0, "name": "Ngã tư Cầu Giấy"}
 ]
 
-# 3. Tính toán lộ trình né ngập cho xe máy
+# 3. Tính toán lộ trình né ngập cho xe máy / ô tô
 result = calculate_routes(
     graph=graph,
     flood_sources=flood_sources,
@@ -129,6 +131,11 @@ if evac_result["found"]:
 ```bash
 python -m unittest discover -s tests
 ```
+**Kết quả thực tế:**
+```text
+Ran 8 tests in 2.454s
+OK
+```
 
 ---
 
@@ -147,5 +154,5 @@ Hệ thống **NORTHSTAR** được thiết kế dựa trên nguyên tắc **100
 ---
 
 ## 📄 6. Giấy phép Bản quyền (License)
-Dự án được phân phối dưới giấy phép **Apache License 2.0 (OSI-Approved)**. Xem chi tiết tại [LICENSE](LICENSE).
+Dự án được phân phối dưới giấy phép **Apache License 2.0 (OSI-Approved)**. Xem chi tiết tại [LICENSE](LICENSE).  
 Mọi đóng góp tuân thủ theo [CONTRIBUTING.md](CONTRIBUTING.md).
