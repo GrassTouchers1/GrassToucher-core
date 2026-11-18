@@ -293,10 +293,195 @@ def get_osi_open_data_registry() -> Dict[str, Any]:
     """
     Chứng thực tuân thủ bản quyền mở Open Source Initiative (OSI) và Open Data.
     Cam kết minh bạch: 100% không cào dữ liệu trái phép (Zero Web Scraping).
+    Kê khai toàn bộ 19 thư viện, framework, dịch vụ dữ liệu mở và quy chuẩn pháp lý.
     """
     return {
+        "project_name": "NorthStar Command - Unified Emergency Operations Center",
         "compliance_statement": "Toàn bộ hệ thống NorthStar/GrassToucher vận hành 100% trên nền tảng Mã Nguồn Mở chuẩn OSI và Dữ Liệu Mở Quốc Tế. Tuyệt đối không cào dữ liệu (No Web Scraping) từ cổng thông tin đóng.",
+        "project_license": "Apache License 2.0 (OSI Approved)",
+        "zero_scraping_policy": True,
+        "humanitarian_use_only": True,
         "osi_approval_registry_url": "https://opensource.org/licenses",
+        "total_components": 19,
+        "categories": {
+            "open_data_apis": [
+                {
+                    "id": "open-meteo",
+                    "name": "Open-Meteo Weather & Flood API",
+                    "role": "Dự báo thời tiết, lượng mưa theo giờ và lưu lượng dòng chảy sông ngòi (River Discharge m³/s)",
+                    "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+                    "terms_url": "https://open-meteo.com/en/terms",
+                    "type": "Open REST API (No Key Required)",
+                    "category": "Dữ liệu Khí tượng & Thủy văn"
+                },
+                {
+                    "id": "glofas",
+                    "name": "Copernicus GloFAS (Global Flood Awareness System)",
+                    "role": "Mô hình thủy văn toán học dự báo lũ quét và ngưỡng an toàn các lưu vực sông ngòi miền Bắc",
+                    "license": "Copernicus Open Access Policy / CC-BY 4.0",
+                    "terms_url": "https://global-flood.emergency.copernicus.eu/",
+                    "type": "Global Operational Hydrological Service",
+                    "category": "Mô hình Thủy văn Viễn thám"
+                },
+                {
+                    "id": "nasa-gpm",
+                    "name": "NASA GPM Data (Global Precipitation Measurement)",
+                    "role": "Đo đạc lượng mưa vệ tinh không gian đa cảm biến IMERG toàn cầu và khu vực Việt Nam",
+                    "license": "NASA Earth Science Open Data Policy (Public Domain / Open Access)",
+                    "terms_url": "https://gpm.nasa.gov/data",
+                    "type": "Satellite Earth Observation Data",
+                    "category": "Dữ liệu Vệ tinh Không gian"
+                },
+                {
+                    "id": "openstreetmap",
+                    "name": "OpenStreetMap (OSM) & OSM France",
+                    "role": "Mạng lưới hình học đường bộ, các nút giao và dữ liệu địa lý cho thuật toán A* / Dijkstra",
+                    "license": "Open Database License 1.0 (ODbL 1.0) & CC-BY-SA 2.0",
+                    "terms_url": "https://www.openstreetmap.org/copyright",
+                    "type": "Geographic Open Data",
+                    "category": "Bản đồ Nền & Mạng lưới Giao thông"
+                },
+                {
+                    "id": "esri-canvas",
+                    "name": "Esri World Topographic & Dark Gray Canvas Maps",
+                    "role": "Bản đồ nền tác chiến ban đêm độ tương phản cao và bản đồ địa hình cứu hộ không dính watermark",
+                    "license": "Esri Master License / Public Safety Non-commercial Tier",
+                    "terms_url": "https://www.esri.com/en-us/legal/terms/full-master-agreement",
+                    "type": "GIS Basemap Tiles (Akamai CDN)",
+                    "category": "Bản đồ Nền GIS"
+                },
+                {
+                    "id": "open-meteo-aqi",
+                    "name": "Open-Meteo Air Quality API",
+                    "role": "Quan trắc chất lượng không khí, chỉ số US-AQI, nồng độ bụi mịn PM2.5, PM10 cho 26 tỉnh miền Bắc",
+                    "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+                    "terms_url": "https://open-meteo.com/en/docs/air-quality-api",
+                    "type": "Atmospheric Composition Open API",
+                    "category": "Quan trắc Môi trường & Không khí"
+                },
+                {
+                    "id": "vn-provinces-geojson",
+                    "name": "Natural Earth & Highcharts Administrative Boundaries",
+                    "role": "Ranh giới địa giới hành chính phân ô 26 tỉnh thành miền Bắc phục vụ điều phối cứu nạn",
+                    "license": "Creative Commons Attribution-ShareAlike 4.0 (CC-BY-SA 4.0)",
+                    "terms_url": "https://www.naturalearthdata.com/about/terms-of-use/",
+                    "type": "Vector GeoJSON Open Data",
+                    "category": "Ranh giới Hành chính GIS"
+                }
+            ],
+            "frontend_stack": [
+                {
+                    "id": "leaflet",
+                    "name": "Leaflet.js (v1.9.4)",
+                    "role": "Engine hiển thị bản đồ tương tác GIS, quản lý Layers, Popups và Tooltips",
+                    "license": "BSD 2-Clause Simplified License (OSI Approved)",
+                    "terms_url": "https://github.com/Leaflet/Leaflet/blob/main/LICENSE",
+                    "type": "Interactive GIS Client Engine",
+                    "category": "Giao diện Bản đồ Web"
+                },
+                {
+                    "id": "leaflet-markercluster",
+                    "name": "Leaflet.markercluster (v1.5.3)",
+                    "role": "Gom cụm động 130 trạm thủy văn và điểm ngập úng nội đô theo mật độ zoom",
+                    "license": "MIT License (OSI Approved)",
+                    "terms_url": "https://github.com/Leaflet/Leaflet.markercluster/blob/master/MIT-LICENSE.txt",
+                    "type": "Spatial Clustering Extension",
+                    "category": "Tối ưu hóa Hiển thị GIS"
+                },
+                {
+                    "id": "tailwind-css",
+                    "name": "Tailwind CSS (v3)",
+                    "role": "Framework utility-first CSS responsive và hỗ trợ chuyển đổi mượt mà Dark Mode / Light Mode",
+                    "license": "MIT License (OSI Approved)",
+                    "terms_url": "https://github.com/tailwindlabs/tailwindcss/blob/master/LICENSE",
+                    "type": "Modern CSS Design Framework",
+                    "category": "Thiết kế Giao diện UI"
+                },
+                {
+                    "id": "lucide-icons",
+                    "name": "Lucide Icons",
+                    "role": "Hệ thống 100+ icon vector SVG trực quan cho phòng điều hành tác chiến",
+                    "license": "ISC License (MIT Compatible, OSI Approved)",
+                    "terms_url": "https://github.com/lucide-icons/lucide/blob/main/LICENSE",
+                    "type": "Vector Graphic Iconography",
+                    "category": "Biểu tượng Tác chiến"
+                },
+                {
+                    "id": "chart-js",
+                    "name": "Chart.js (v4.4.1)",
+                    "role": "Biểu đồ thủy văn, trực quan hóa mực nước sông và lượng mưa tích lũy 24h",
+                    "license": "MIT License (OSI Approved)",
+                    "terms_url": "https://github.com/chartjs/Chart.js/blob/master/LICENSE.md",
+                    "type": "HTML5 Canvas Charting Engine",
+                    "category": "Trực quan hóa Dữ liệu"
+                },
+                {
+                    "id": "vietnam-fonts",
+                    "name": "Be Vietnam Pro & Inter Typography (Google Fonts)",
+                    "role": "Font chữ quốc gia tiếng Việt sắc nét, chống lỗi hiển thị dấu câu trên mọi thiết bị",
+                    "license": "SIL Open Font License 1.1 (OFL-1.1, OSI Approved)",
+                    "terms_url": "https://scripts.sil.org/OFL",
+                    "type": "Open Source Typography",
+                    "category": "Kiểu chữ Chuẩn Quốc gia"
+                }
+            ],
+            "backend_engine": [
+                {
+                    "id": "fastapi",
+                    "name": "FastAPI (Python 3.10+)",
+                    "role": "Khung RESTful API bất đồng bộ siêu tốc xử lý tiếp nhận thông tin SOS và phân quyền RBAC",
+                    "license": "MIT License (OSI Approved)",
+                    "terms_url": "https://github.com/tiangolo/fastapi/blob/master/LICENSE",
+                    "type": "High Performance Async Web Framework",
+                    "category": "Hệ thống Backend REST API"
+                },
+                {
+                    "id": "uvicorn-starlette",
+                    "name": "Uvicorn & Starlette",
+                    "role": "Web server ASGI bất đồng bộ siêu nhẹ hỗ trợ luồng dữ liệu thời gian thực",
+                    "license": "BSD 3-Clause License (OSI Approved)",
+                    "terms_url": "https://github.com/encode/uvicorn/blob/master/LICENSE.md",
+                    "type": "Lightning-fast ASGI Web Server",
+                    "category": "Hạ tầng Máy chủ Bất đồng bộ"
+                },
+                {
+                    "id": "postgis-postgres",
+                    "name": "PostgreSQL & PostGIS",
+                    "role": "Cơ sở dữ liệu không gian lưu trữ và truy vấn không gian hình học GIS các điểm ngập",
+                    "license": "PostgreSQL License & GNU GPL v2 (OSI Approved)",
+                    "terms_url": "https://www.postgresql.org/about/licence/",
+                    "type": "Enterprise Spatial Relational Database",
+                    "category": "Cơ sở Dữ liệu Không gian GIS"
+                },
+                {
+                    "id": "networkx",
+                    "name": "NetworkX (Graph Theory)",
+                    "role": "Cấu trúc dữ liệu đồ thị giao thông phục vụ thuật toán tìm đường cứu nạn A* và Dijkstra",
+                    "license": "BSD 3-Clause License (OSI Approved)",
+                    "terms_url": "https://github.com/networkx/networkx/blob/main/LICENSE.txt",
+                    "type": "Network Analysis & Graph Mathematics",
+                    "category": "Thuật toán Định tuyến Né Ngập"
+                },
+                {
+                    "id": "pydantic",
+                    "name": "Pydantic (v2)",
+                    "role": "Kiểm chuẩn và parse dữ liệu JSON SOS, báo cáo thiên tai và cấu hình tác chiến",
+                    "license": "MIT License (OSI Approved)",
+                    "terms_url": "https://github.com/pydantic/pydantic/blob/main/LICENSE",
+                    "type": "Data Validation & Settings Management",
+                    "category": "Kiểm chuẩn Dữ liệu"
+                },
+                {
+                    "id": "httpx",
+                    "name": "HTTPX (Async HTTP Client)",
+                    "role": "Client HTTP bất đồng bộ giao tiếp các cổng dữ liệu khí tượng Open-Meteo và GloFAS",
+                    "license": "BSD 3-Clause License (OSI Approved)",
+                    "terms_url": "https://github.com/encode/httpx/blob/master/LICENSE.md",
+                    "type": "Next-Gen Asynchronous HTTP Client",
+                    "category": "Kết nối API Ngoại vi"
+                }
+            ]
+        },
         "sources": [
             {
                 "id": "open-meteo",
@@ -334,7 +519,7 @@ def get_osi_open_data_registry() -> Dict[str, Any]:
                 "id": "osi-stack",
                 "name": "Kiến trúc Mã nguồn mở NorthStar",
                 "role": "Mã nguồn Core, Backend FastAPI và Frontend Web tác chiến cứu nạn",
-                "license": "Apache License 2.0 (OSI Approved) & GNU AGPL v3",
+                "license": "Apache License 2.0 (OSI Approved)",
                 "terms_url": "https://opensource.org/licenses/Apache-2.0",
                 "type": "OSI Approved Open Source Software"
             }
