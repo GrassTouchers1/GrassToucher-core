@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "grasstoucher-core"
-version = "0.4.0"
+version = "1.0.0"
 description = "Lõi thuật toán tìm đường thích ứng ngập lụt đô thị và mô hình AI dự báo mực nước (100% Mã nguồn mở)"
 readme = "README.md"
 requires-python = ">=3.10"

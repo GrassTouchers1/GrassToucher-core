@@ -2,6 +2,10 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![OSI Approved](https://img.shields.io/badge/OSI-Approved%20Open%20Source-brightgreen.svg)](https://opensource.org/licenses)
+[![Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-orange.svg)](CHANGELOG.md)
+[![Building from Source](https://img.shields.io/badge/Build-From%20Source-blue.svg)](INSTALL.md)
+[![Release](https://img.shields.io/badge/Release-v1.0.0-green.svg)](https://github.com/GrassTouchers1/GrassToucher-core/releases)
+[![Bug Tracker](https://img.shields.io/badge/Bug%20Tracker-GitHub%20Issues-red.svg)](https://github.com/GrassTouchers1/GrassToucher-core/issues)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![OpenStreetMap](https://img.shields.io/badge/Data-OpenStreetMap-green.svg)](https://www.openstreetmap.org/)
 [![Open-Meteo](https://img.shields.io/badge/Weather-Open--Meteo%20API-orange.svg)](https://open-meteo.com/)
@@ -153,6 +157,13 @@ Hệ thống **NORTHSTAR** được thiết kế dựa trên nguyên tắc **100
 
 ---
 
-## 📄 6. Giấy phép Bản quyền (License)
-Dự án được phân phối dưới giấy phép **Apache License 2.0 (OSI-Approved)**. Xem chi tiết tại [LICENSE](LICENSE).  
-Mọi đóng góp tuân thủ theo [CONTRIBUTING.md](CONTRIBUTING.md).
+## 📄 6. Tuyên Bố Giấy Phép & Tuân Thủ Chuẩn Mã Nguồn Mở (OSI & PoF Compliance)
+
+Toàn bộ gói thuật toán lõi được phát triển và kiểm định theo chuẩn mở:
+- ⚖️ **Giấy phép phần mềm:** [Apache License 2.0](LICENSE) (OSI-Approved, `SPDX-License-Identifier: Apache-2.0` gắn trên từng tệp mã nguồn).
+- 📋 **Báo cáo kiểm định bản quyền:** [docs/LICENSE_AUDIT.md](docs/LICENSE_AUDIT.md).
+- 📦 **Hướng dẫn dịch & cài đặt từ mã nguồn sạch:** [INSTALL.md](INSTALL.md).
+- 📝 **Lịch sử phiên bản phát hành:** [CHANGELOG.md](CHANGELOG.md) (Chuẩn Keep a Changelog v1.1.0 & Semantic Versioning v2.0.0).
+- 🤝 **Quy chuẩn đóng góp:** [CONTRIBUTING.md](CONTRIBUTING.md).
+- 🐛 **Hệ thống Quản lý Lỗi (Bug Tracker):** Tiếp nhận tại [GitHub Issues](https://github.com/GrassTouchers1/GrassToucher-core/issues) với Issue Templates chuẩn trong `.github/ISSUE_TEMPLATE/`.
+- 🏷️ **Bản phát hành chính thức dự thi:** [Release v1.0.0](https://github.com/GrassTouchers1/GrassToucher-core/releases/tag/v1.0.0).
