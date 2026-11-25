@@ -383,6 +383,7 @@ def find_evacuation_route(
     orig_node = snap_orig["closer_node"]
 
     shelter_node_map = {}
+    shelter_snap_dist = {}
     target_nodes = set()
     for s in shelters:
         if s.get("status") == "closed":
@@ -391,8 +392,12 @@ def find_evacuation_route(
             continue
         try:
             s_snap = graph.snap_to_edge(s["lng"], s["lat"])
+            if s_snap["dist_m"] > config.MAX_SNAP_M:
+                continue
             s_node = s_snap["closer_node"]
-            shelter_node_map[s_node] = s
+            if s_node not in shelter_snap_dist or s_snap["dist_m"] < shelter_snap_dist[s_node]:
+                shelter_snap_dist[s_node] = s_snap["dist_m"]
+                shelter_node_map[s_node] = s
             target_nodes.add(s_node)
         except Exception:
             continue
