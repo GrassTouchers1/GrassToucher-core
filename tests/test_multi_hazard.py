@@ -116,6 +116,51 @@ class TestMultiHazardRouting(unittest.TestCase):
         self.assertGreater(res["duration_min"], 0)
         self.assertEqual(res["geometry"]["type"], "LineString")
 
+    def test_evacuation_filters_far_shelter_and_prefers_closer_snap(self):
+        graph = get_graph()
+        far_shelter = {
+            "id": 999,
+            "name": "Điểm sơ tán ngoài vùng bản đồ (Lào Cai)",
+            "lng": 103.9700,
+            "lat": 22.4800,
+            "capacity": 500,
+            "current_occupancy": 0,
+            "status": "open"
+        }
+        res_none = find_evacuation_route(
+            graph=graph,
+            hazard_map={},
+            origin_lng=105.8010,
+            origin_lat=21.0105,
+            shelters=[far_shelter],
+            vehicle="walk"
+        )
+        self.assertFalse(res_none["found"])
+
+        # Hai shelter cùng nút đường: ưu tiên shelter có snap dist_m nhỏ hơn
+        snap_target = graph.snap_to_edge(105.7940, 21.0210)
+        node_id = snap_target["closer_node"]
+        nx_lng = graph.G.nodes[node_id]["x"]
+        nx_lat = graph.G.nodes[node_id]["y"]
+        shelters = [
+            {"id": 101, "name": "Xa nút hơn", "lng": 105.7940, "lat": 21.0210, "capacity": 100, "current_occupancy": 0, "status": "open"},
+            {"id": 102, "name": "Sát nút hơn", "lng": nx_lng, "lat": nx_lat, "capacity": 100, "current_occupancy": 0, "status": "open"},
+        ]
+        self.assertEqual(
+            graph.snap_to_edge(shelters[0]["lng"], shelters[0]["lat"])["closer_node"],
+            graph.snap_to_edge(shelters[1]["lng"], shelters[1]["lat"])["closer_node"],
+        )
+        res_closer = find_evacuation_route(
+            graph=graph,
+            hazard_map={},
+            origin_lng=105.8010,
+            origin_lat=21.0105,
+            shelters=shelters,
+            vehicle="walk"
+        )
+        self.assertTrue(res_closer["found"])
+        self.assertEqual(res_closer["shelter"]["id"], 102)
+
 
 if __name__ == "__main__":
     unittest.main()

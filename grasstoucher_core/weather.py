@@ -24,10 +24,11 @@ Tích hợp dữ liệu khí tượng thủy văn chuẩn mở quốc tế:
 
 Giấy phép mã nguồn: GNU AGPL v3 (Mã nguồn mở, Hoàn toàn miễn phí, Không phụ thuộc cổng dữ liệu đóng).
 """
-import urllib.request
 import json
 import logging
 import time
+import urllib.request
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Tuple, List, Optional
 
 log = logging.getLogger("grasstoucher.weather")
@@ -61,8 +62,13 @@ def fetch_hanoi_weather(timeout: int = 5) -> Dict[str, Any]:
     global _weather_cache, _weather_cache_time
     now = time.time()
     if _weather_cache is not None and (now - _weather_cache_time) < WEATHER_CACHE_TTL:
-        return _weather_cache
+        cached = dict(_weather_cache)
+        cached["is_cached"] = True
+        if cached.get("status") == "ok":
+            cached["data_type"] = "cached_live"
+        return cached
 
+    fetched_at = datetime.now(timezone.utc).isoformat()
     try:
         req = urllib.request.Request(
             OPEN_METEO_WEATHER_URL,
@@ -77,6 +83,10 @@ def fetch_hanoi_weather(timeout: int = 5) -> Dict[str, Any]:
 
         res = {
             "status": "ok",
+            "data_type": "live",
+            "is_fallback": False,
+            "is_cached": False,
+            "fetched_at": fetched_at,
             "city": "Hà Nội",
             "coordinates": {"lat": HANOI_LAT, "lng": HANOI_LNG},
             "hourly_forecast": [
@@ -92,21 +102,29 @@ def fetch_hanoi_weather(timeout: int = 5) -> Dict[str, Any]:
         return res
     except Exception as e:
         log.warning("Không thể kết nối Open-Meteo API, sử dụng dữ liệu dự phòng nội bộ: %s", e)
-        if _weather_cache is not None:
-            return _weather_cache
+        if _weather_cache is not None and _weather_cache.get("status") == "ok":
+            stale = dict(_weather_cache)
+            stale["is_cached"] = True
+            stale["data_type"] = "stale_cache_fallback"
+            stale["warning"] = f"Using cached live data due to upstream error: {e}"
+            return stale
+        vn_today = (datetime.now(timezone.utc) + timedelta(hours=7)).strftime("%Y-%m-%d")
         fallback = {
             "status": "fallback",
+            "data_type": "fallback_simulation",
+            "is_fallback": True,
+            "is_cached": False,
+            "fetched_at": fetched_at,
+            "error": str(e),
             "city": "Hà Nội",
             "hourly_forecast": [
-                {"time": f"2026-11-17T{h:02d}:00", "precipitation_mm": 5.2 if 14 <= h <= 18 else 0.0}
+                {"time": f"{vn_today}T{h:02d}:00", "precipitation_mm": 5.2 if 14 <= h <= 18 else 0.0}
                 for h in range(24)
             ],
-            "data_source": "Open-Meteo Weather API (Cached Fallback)",
+            "data_source": "Open-Meteo Weather API (Fallback Simulation)",
             "license": "CC-BY 4.0",
             "terms_url": "https://open-meteo.com/en/terms"
         }
-        _weather_cache = fallback
-        _weather_cache_time = now
         return fallback
 
 
@@ -148,8 +166,11 @@ def fetch_open_meteo_flood(
     now = time.time()
     if cache_key in _flood_cache:
         cached_data, cached_time = _flood_cache[cache_key]
-        if (now - cached_time) < WEATHER_CACHE_TTL:
-            return cached_data
+        if (now - cached_time) < WEATHER_CACHE_TTL and cached_data.get("status") == "ok":
+            res = dict(cached_data)
+            res["is_cached"] = True
+            res["data_type"] = "cached_live"
+            return res
 
     url = (
         f"https://flood-api.open-meteo.com/v1/flood?"
@@ -158,6 +179,7 @@ def fetch_open_meteo_flood(
         f"forecast_days={forecast_days}"
     )
 
+    fetched_at = datetime.now(timezone.utc).isoformat()
     try:
         req = urllib.request.Request(
             url,
@@ -181,6 +203,10 @@ def fetch_open_meteo_flood(
 
         result = {
             "status": "ok",
+            "data_type": "live",
+            "is_fallback": False,
+            "is_cached": False,
+            "fetched_at": fetched_at,
             "basin_name": basin_name,
             "coordinates": {"lat": lat, "lng": lng},
             "model": "Copernicus GloFAS (Global Flood Awareness System)",
@@ -200,8 +226,14 @@ def fetch_open_meteo_flood(
         return result
     except Exception as e:
         log.warning("Open-Meteo Flood API không phản hồi, sử dụng dữ liệu mô phỏng thủy văn GloFAS: %s", e)
+        base_dt = datetime.now(timezone.utc) + timedelta(hours=7)
         fallback = {
             "status": "fallback",
+            "data_type": "fallback_simulation",
+            "is_fallback": True,
+            "is_cached": False,
+            "fetched_at": fetched_at,
+            "error": str(e),
             "basin_name": basin_name,
             "coordinates": {"lat": lat, "lng": lng},
             "model": "Copernicus GloFAS (Hydrological Simulation Fallback)",
@@ -209,14 +241,13 @@ def fetch_open_meteo_flood(
             "max_discharge_forecast": 8.4,
             "flood_risk_level": "ELEVATED",
             "daily_forecast": [
-                {"date": f"2026-11-{17+i:02d}", "discharge_mean": 4.5 + i * 0.8, "discharge_max": 6.0 + i * 1.1}
+                {"date": (base_dt + timedelta(days=i)).strftime("%Y-%m-%d"), "discharge_mean": 4.5 + i * 0.8, "discharge_max": 6.0 + i * 1.1}
                 for i in range(forecast_days)
             ],
-            "data_source": "Open-Meteo Flood API (Offline Cache)",
+            "data_source": "Open-Meteo Flood API (Fallback Simulation)",
             "license": "CC-BY 4.0",
             "terms_url": "https://open-meteo.com/en/terms"
         }
-        _flood_cache[cache_key] = (fallback, now)
         return fallback
 
 
@@ -393,22 +424,13 @@ def get_osi_open_data_registry() -> Dict[str, Any]:
             ],
             "frontend_stack": [
                 {
-                    "id": "leaflet",
-                    "name": "Leaflet.js (v1.9.4)",
-                    "role": "Engine hiển thị bản đồ tương tác GIS, quản lý Layers, Popups và Tooltips",
-                    "license": "BSD 2-Clause Simplified License (OSI Approved)",
-                    "terms_url": "https://github.com/Leaflet/Leaflet/blob/main/LICENSE",
-                    "type": "Interactive GIS Client Engine",
+                    "id": "maplibre-gl",
+                    "name": "MapLibre GL JS (v4+)",
+                    "role": "Engine hiển thị bản đồ vector & vệ tinh WebGL hiệu năng cao, gom cụm GPU và 3D Terrain",
+                    "license": "BSD 3-Clause License (OSI Approved)",
+                    "terms_url": "https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt",
+                    "type": "WebGL GIS Client Engine",
                     "category": "Giao diện Bản đồ Web"
-                },
-                {
-                    "id": "leaflet-markercluster",
-                    "name": "Leaflet.markercluster (v1.5.3)",
-                    "role": "Gom cụm động 130 trạm thủy văn và điểm ngập úng nội đô theo mật độ zoom",
-                    "license": "MIT License (OSI Approved)",
-                    "terms_url": "https://github.com/Leaflet/Leaflet.markercluster/blob/master/MIT-LICENSE.txt",
-                    "type": "Spatial Clustering Extension",
-                    "category": "Tối ưu hóa Hiển thị GIS"
                 },
                 {
                     "id": "tailwind-css",

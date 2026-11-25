@@ -118,10 +118,7 @@ def best_edge(G, flood_map: dict, u: int, v: int, vehicle: str, mode: str) -> Tu
             if not best_has_geom and has_geom:
                 best_k, best_c, best_has_geom = k, c, True
 
-    if best_k is None and G[u][v]:
-        best_k = min(G[u][v].keys(), key=lambda k: G[u][v][k].get("length", float("inf")))
-        best_c = G[u][v][best_k].get("length", 0.0)
-
+    # Trả về (None, None) nếu mọi cạnh song song đều bị chặn — tuyệt đối không rơi về cạnh bị chặn.
     return best_k, best_c
 
 
@@ -197,30 +194,60 @@ def describe_route(G, flood_map: dict, path: List[int], vehicle: str, mode: str)
     for i in range(len(path) - 1):
         u, v = path[i], path[i + 1]
         k, c = best_edge(G, flood_map, u, v, vehicle, mode)
+        if k is None or c is None:
+            return {
+                "found": False,
+                "mode": mode,
+                "reason": "Tuyến đường có đoạn bị thiên tai chặn hoàn toàn, không thể lưu thông an toàn.",
+                "distance_m": round(total_dist),
+                "duration_min": 0.0,
+                "cost": round(total_cost, 1),
+                "passable": False,
+                "flood_warnings": [w["name"] for w in warnings],
+                "geometry": {"type": "LineString", "coordinates": []},
+                "segments": segments,
+            }
         data = G[u][v][k]
         length = float(data.get("length", 0.0))
         total_dist += length
-        total_cost += (c if c is not None else length)
+        total_cost += c
 
-        flood = flood_map.get((u, v, k))
+        raw_hazard = flood_map.get((u, v, k))
+        hazards_on_edge = raw_hazard if isinstance(raw_hazard, list) else ([raw_hazard] if raw_hazard is not None else [])
         edge_passable = True
-        if flood is not None:
-            if flood.get("passable") is False or flood.get("blocked") is True:
+        edge_flooded = False
+        for flood in hazards_on_edge:
+            if not isinstance(flood, dict):
+                continue
+            h_type = flood.get("hazard_type") or flood.get("type", "flood")
+            if flood.get("passable") is False or flood.get("blocked") is True or h_type in ("storm_block", "tree_fall"):
                 edge_passable = False
                 passable = False
+                edge_flooded = True
                 warnings.append({
                     "name": flood.get("name", "Vùng nguy cơ thiên tai"),
                     "depth_cm": 0.0,
                     "threshold_cm": 0.0,
                     "passable": False
                 })
-            elif "depth_cm" in flood:
-                depth = float(flood["depth_cm"])
+            elif h_type == "landslide" and flood.get("severity", "medium") in ("high", "critical"):
+                edge_passable = False
+                passable = False
+                edge_flooded = True
+                warnings.append({
+                    "name": flood.get("name", "Sạt lở nghiêm trọng"),
+                    "depth_cm": 0.0,
+                    "threshold_cm": 0.0,
+                    "passable": False
+                })
+            elif "depth_cm" in flood or h_type == "flood":
+                depth = float(flood.get("depth_cm", 0.0))
                 limit = vehicle_limit(vehicle, float(flood.get("threshold_cm", 20.0)))
                 if depth >= limit:
                     edge_passable = False
                     passable = False
                 if depth >= config.PENALTY_START_CM:
+                    edge_flooded = True
                     warnings.append({
                         "name": flood.get("name", "Điểm ngập"),
                         "depth_cm": depth,
@@ -228,6 +255,7 @@ def describe_route(G, flood_map: dict, path: List[int], vehicle: str, mode: str)
                         "passable": edge_passable,
                     })
             else:
+                edge_flooded = True
                 warnings.append({
                     "name": flood.get("name", "Vùng cảnh báo thiên tai"),
                     "depth_cm": 0.0,
@@ -244,7 +272,7 @@ def describe_route(G, flood_map: dict, path: List[int], vehicle: str, mode: str)
         segments.append({
             "u": u, "v": v, "length_m": round(length, 1),
             "street": data.get("name") if isinstance(data.get("name"), str) else None,
-            "flooded": flood is not None and (float(flood.get("depth_cm", 0.0)) >= config.PENALTY_START_CM or flood.get("hazard_type")),
+            "flooded": edge_flooded,
             "passable": edge_passable,
         })
 
@@ -399,6 +427,7 @@ def find_evacuation_route(
     orig_node = snap_orig["closer_node"]
 
     shelter_node_map = {}
+    shelter_snap_dist = {}
     target_nodes = set()
     for s in shelters:
         if s.get("status") == "closed":
@@ -407,8 +436,12 @@ def find_evacuation_route(
             continue
         try:
             s_snap = graph.snap_to_edge(s["lng"], s["lat"])
+            if s_snap["dist_m"] > config.MAX_SNAP_M:
+                continue
             s_node = s_snap["closer_node"]
-            shelter_node_map[s_node] = s
+            if s_node not in shelter_snap_dist or s_snap["dist_m"] < shelter_snap_dist[s_node]:
+                shelter_snap_dist[s_node] = s_snap["dist_m"]
+                shelter_node_map[s_node] = s
             target_nodes.add(s_node)
         except Exception:
             continue
@@ -443,12 +476,19 @@ def find_evacuation_route(
     chosen_shelter = shelter_node_map[best_shelter_node]
 
     desc = describe_route(graph.G, hazard_map, best_path, vehicle, "safe")
+    if not desc.get("found") or not desc.get("passable", True):
+        return {
+            "found": False,
+            "passable": False,
+            "reason": desc.get("reason") or "Tuyến đường tới điểm sơ tán đã bị chia cắt bởi thiên tai.",
+        }
     speed_kmh = config.SPEED_KMH.get(vehicle, 4.5)
     speed_m_min = speed_kmh * 1000 / 60
     duration_min = round(desc["distance_m"] / speed_m_min, 1)
 
     return {
         "found": True,
+        "passable": True,
         "mode": "evacuation",
         "vehicle": vehicle,
         "shelter": chosen_shelter,

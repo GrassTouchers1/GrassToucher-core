@@ -38,7 +38,7 @@ from .weather import (
 )
 from .ai.prediction_engine import WaterPredictionEngine, get_prediction_engine
 
-__version__ = "0.5.0"
+__version__ = "1.0.0"
 __all__ = [
     "RoadGraph",
     "get_graph",

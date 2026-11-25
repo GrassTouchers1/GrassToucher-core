@@ -1,4 +1,4 @@
-# 🌐 NORTHSTAR Core – Multi-Hazard Disaster Intelligence & Evacuation Engine (GrassToucher Core v0.4.0)
+# 🌐 NORTHSTAR Core – Multi-Hazard Disaster Intelligence & Evacuation Engine (GrassToucher Core v1.0.0)
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![OSI Approved](https://img.shields.io/badge/OSI-Approved%20Open%20Source-brightgreen.svg)](https://opensource.org/licenses)

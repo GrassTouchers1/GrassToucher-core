@@ -115,8 +115,13 @@ class WaterPredictionEngine:
         diff_60 = pred_60 - current_depth_cm
         trend_60 = "rising" if diff_60 > 1.5 else ("falling" if diff_60 < -1.5 else "stable")
 
+        has_trained_models = (self.model_30m is not None) and (self.model_60m is not None)
         return {
             "current_depth_cm": current_depth_cm,
+            "is_demo_model": True,
+            "model_type": "GradientBoostingRegressor (Demo/Trained-on-Simulation)" if has_trained_models else "Rule-Based Hydrological Fallback",
+            "training_data_type": "synthetic_hydrological_simulation" if has_trained_models else "heuristic_fallback",
+            "data_type": "simulated_prediction",
             "rainfall_context": {
                 "rain_1h_mm": rain_1h,
                 "rain_3h_mm": rain_3h,
