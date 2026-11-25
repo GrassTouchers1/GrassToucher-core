@@ -1,40 +1,30 @@
 # Quy định Đóng góp Mã Nguồn Mở (Contributing Guidelines)
 
-Dự án **GrassToucher Core** là phần mềm mã nguồn mở tự do được phát hành theo giấy phép **Apache License 2.0 (OSI-Approved)**. Chúng tôi luôn hoan nghênh và đánh giá cao mọi sự đóng góp từ cộng đồng nhà phát triển, nhà nghiên cứu thủy văn và sinh viên yêu thích công nghệ mở!
+Gói thuật toán **grasstoucher-core** là thư viện Python mã nguồn mở, được phát hành theo giấy phép **Apache License 2.0 (OSI-Approved)**.
 
 ---
 
-## 📜 1. Nguyên tắc Mã Nguồn Mở (FOSS Principles)
-- **100% Công nghệ mở:** Mọi thư viện bổ sung phải có giấy phép tương thích mã nguồn mở (MIT, Apache 2.0, BSD, GPL, LGPL). Tuyệt đối không tích hợp thư viện độc quyền hoặc phụ thuộc API thương mại đóng.
-- **Minh bạch & Tái sử dụng:** Mã nguồn phải được viết rõ ràng, có docstrings, chú thích công thức toán học/thủy văn đầy đủ.
+## 📜 1. Tiêu chuẩn Mã Nguồn
+- Tuân thủ chuẩn định dạng mã nguồn PEP 8.
+- Mọi hàm thuật toán đồ thị và hàm hồi quy AI mới phải có Unit Test đi kèm trong thư mục `tests/`.
+- Đóng gói chuẩn PEP 517 / PEP 621 (`pyproject.toml`).
 
 ---
 
-## 🛠️ 2. Quy trình Đóng góp (Workflow)
-
-1. **Fork** repository này về tài khoản GitHub của bạn.
-2. Tạo nhánh tính năng mới:
+## 🛠️ 2. Hướng dẫn Phát triển
+1. **Clone & Cài đặt môi trường phát triển (Editable):**
    ```bash
-   git checkout -b feature/ten-tinh-nang-moi
-   ```
-3. Cài đặt môi trường phát triển:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Trên Windows: .\venv\Scripts\activate
+   git clone https://github.com/GrassTouchers1/GrassToucher-core.git
+   cd GrassToucher-core
    pip install -e .
    ```
-4. Viết code và viết Unit Test bổ sung trong thư mục `tests/`.
-5. Đảm bảo mọi kiểm thử đều vượt qua:
+2. **Kiểm thử:**
    ```bash
-   python -m unittest discover -s tests
+   pytest tests/
    ```
-6. Commit thay đổi với thông điệp rõ ràng theo chuẩn Conventional Commits:
-   ```bash
-   git commit -m "feat(routing): cai thien toc do tinh toan A* tren do thi lon"
-   ```
-7. Đẩy lên remote và tạo **Pull Request (PR)** vào nhánh `main` của repository gốc.
 
 ---
 
-## ⚖️ 3. Quy tắc Ứng xử (Code of Conduct)
-Chúng tôi cam kết xây dựng một môi trường đóng góp mã nguồn mở thân thiện, tôn trọng và hòa nhập cho tất cả mọi người. Mọi hành vi thiếu văn hóa hoặc vi phạm tiêu chuẩn cộng đồng sẽ bị từ chối.
+## 🐛 3. Hệ thống Quản lý Lỗi Phần mềm (Bug Tracker)
+- 🔗 **Kho quản lý lỗi:** [https://github.com/GrassTouchers1/GrassToucher-core/issues](https://github.com/GrassTouchers1/GrassToucher-core/issues)
+- Vui lòng sử dụng GitHub Issues để báo cáo lỗi thuật toán, sai lệch trọng số thủy văn hoặc ngoại lệ đồ thị.

@@ -1,3 +1,19 @@
+# Copyright 2026 GrassTouchers Team
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Mô hình AI dự báo mực nước ngập đô thị bằng Scikit-Learn Gradient Boosting.
 Dự báo mực nước sau 30 phút và 60 phút.
@@ -99,8 +115,13 @@ class WaterPredictionEngine:
         diff_60 = pred_60 - current_depth_cm
         trend_60 = "rising" if diff_60 > 1.5 else ("falling" if diff_60 < -1.5 else "stable")
 
+        has_trained_models = (self.model_30m is not None) and (self.model_60m is not None)
         return {
             "current_depth_cm": current_depth_cm,
+            "is_demo_model": True,
+            "model_type": "GradientBoostingRegressor (Demo/Trained-on-Simulation)" if has_trained_models else "Rule-Based Hydrological Fallback",
+            "training_data_type": "synthetic_hydrological_simulation" if has_trained_models else "heuristic_fallback",
+            "data_type": "simulated_prediction",
             "rainfall_context": {
                 "rain_1h_mm": rain_1h,
                 "rain_3h_mm": rain_3h,
